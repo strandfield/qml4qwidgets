@@ -1,6 +1,6 @@
 #include "runner.h"
 
-#include "qml4qwidgets.h"
+#include "qml4qwidgets/qml4qwidgets.h"
 
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -19,27 +19,9 @@
 
 #include <map>
 
-void listNamedObjects(QObject* obj, std::map<QString, QObject*>& outmap)
-{
-  for (QObject* o : obj->children()) {
-    listNamedObjects(o, outmap);
-  }
-
-  if (!obj->objectName().isEmpty()) {
-    outmap[obj->objectName()] = obj;
-  }
-}
-
-std::map<QString, QObject*> listNamedObjects(QObject* obj)
-{
-  std::map<QString, QObject*> dict;
-  listNamedObjects(obj, dict);
-  return dict;
-}
-
 QuarkRunner::QuarkRunner(QObject* parent) : QObject(parent)
 {
-
+  m_q4q_controller = new Qml4QWidgetsController(nullptr, this);
 }
 
 QuarkRunner::~QuarkRunner()
@@ -118,14 +100,13 @@ void QuarkRunner::setWidget(const QString& formUiPath)
   widget->show();
 
   if (m_widget) {
-    m_widget->close();
-    m_widget->deleteLater();
+    m_q4q_controller->destroyWidget(m_widget);
   }
 
   m_widget = widget;
 
   if (m_component) {
-    setupController(m_component);
+    m_q4q_controller->installControllerOnWidget(m_widget, m_component);
   }
 }
 
@@ -136,87 +117,13 @@ void QuarkRunner::setController(const QString& qmlControllerFilePath)
 
 void QuarkRunner::setController(const QUrl& url)
 {
-  if (!m_qml_engine) {
-    initQmlEngine();
+  m_q4q_controller->qmlEngine()->clearComponentCache();
+  m_component = new QQmlComponent(m_q4q_controller->qmlEngine());
+  m_component->loadUrl(url);
+
+  if (m_widget) {
+    m_q4q_controller->installControllerOnWidget(m_widget, m_component);
   }
-
-  if (m_component && m_component->url() == url) {
-    m_qml_engine->clearComponentCache();
-  }
-
-  auto* component = new QQmlComponent(m_qml_engine);
-  connect(component, &QQmlComponent::statusChanged, this, &QuarkRunner::onQmlComponentStatusChanged);
-  component->loadUrl(url, QQmlComponent::Asynchronous);
-}
-
-void QuarkRunner::initQmlEngine()
-{
-  if (m_qml_engine) {
-    return;
-  }
-
-  initQml4QWidgets();
-
-  m_qml_engine = new QQmlEngine(this);
-}
-
-QQmlContext* QuarkRunner::createQmlContextForWidget(QWidget* widget)
-{
-  std::map<QString, QObject*> objs = listNamedObjects(widget);
-
-  auto* context = new QQmlContext(m_qml_engine->rootContext(), widget);
-
-  for (auto p : objs) {
-    context->setContextProperty(p.first, p.second);
-  }
-
-  context->setContextProperty("widget", widget);
-
-  return context;
-}
-
-void QuarkRunner::setupController(QQmlComponent* component)
-{
-  QQmlContext* context = createQmlContextForWidget(m_widget);
-
-  QObject* controller = component->beginCreate(context);
-
-  if (!controller) {
-    return;
-  }
-
-  if (m_controller) {
-    m_controller->deleteLater();
-  }
-
-  m_controller = controller;
-
-  m_controller->setParent(m_widget);
-
-  component->completeCreate();
-
-  m_component = component;
-}
-
-void QuarkRunner::onQmlComponentStatusChanged()
-{
-  auto* component = qobject_cast<QQmlComponent*>(sender());
-
-  if (!component) {
-    return;
-  }
-
-  if (component->status() == QQmlComponent::Error) {
-    qDebug() << "QQmlComponent compilation failed: " << component->errorString();
-  } else if (component->status() == QQmlComponent::Loading) {
-    qDebug() << "QQmlComponent is loading...";
-  }
-
-  if (component->status() != QQmlComponent::Ready) {
-    return;
-  }
-
-  setupController(component);
 }
 
 void QuarkRunner::onFileChanged(const QString& filePath)
@@ -225,8 +132,10 @@ void QuarkRunner::onFileChanged(const QString& filePath)
   // or maybe wait for the application to gain focus again?
 
   if (filePath.endsWith(".ui")) {
+    qDebug() << "detected changes on " << filePath << ", ui will be updated";
     setWidget(filePath);
   } else if (filePath.endsWith(".qml")) {
+    qDebug() << "detected changes on " << filePath << ", controller will be updated";
     setController(filePath);
   }
 

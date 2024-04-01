@@ -2,7 +2,7 @@
 #ifndef Q4Q_API_MESSAGEBOX_H
 #define Q4Q_API_MESSAGEBOX_H
 
-#include "qml4qwidgets.defs.h"
+#include "qml4qwidgets/qml4qwidgets.defs.h"
 
 #include <QObject>
 

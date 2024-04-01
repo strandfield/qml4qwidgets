@@ -13,7 +13,7 @@ WidgetController {
                 text += " World!"
             }
 
-            MessageBox.information(widget, "Greetings", text);
+            MessageBox.information(controlledWidget, "Greetings", text);
         }
     }
 }

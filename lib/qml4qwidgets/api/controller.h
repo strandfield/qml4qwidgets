@@ -2,7 +2,7 @@
 #ifndef Q4Q_CONTROLLER_H
 #define Q4Q_CONTROLLER_H
 
-#include "qml4qwidgets.defs.h"
+#include "qml4qwidgets/qml4qwidgets.defs.h"
 
 #include <QObject>
 

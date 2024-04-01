@@ -2,14 +2,9 @@
 #ifndef QUARK_RUNNER_H
 #define QUARK_RUNNER_H
 
+#include "qml4qwidgets/qml4qwidgets.h"
+
 #include <QObject>
-
-#include <memory>
-
-class QQmlComponent;
-class QQmlContext;
-class QQmlEngine;
-class QWidget;
 
 class QuarkRunner : public QObject
 {
@@ -24,17 +19,14 @@ public:
   void setController(const QUrl& url);
 
 protected:
-  void initQmlEngine();
-  QQmlContext* createQmlContextForWidget(QWidget* widget);
   void setupController(QQmlComponent* component);
 
 protected Q_SLOTS:
-  void onQmlComponentStatusChanged();
   void onFileChanged(const QString& filePath);
 
 private:
+  Qml4QWidgetsController* m_q4q_controller;
   QWidget* m_widget = nullptr;
-  QQmlEngine* m_qml_engine = nullptr;
   QQmlComponent* m_component = nullptr;
   QObject* m_controller = nullptr;
 };
