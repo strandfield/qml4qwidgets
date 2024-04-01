@@ -1,0 +1,4 @@
+build
+build-*
+ignore
+CMakeLists.txt.user
