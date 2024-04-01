@@ -6,6 +6,8 @@
 
 #include <QObject>
 
+class QuarkWidgetFactory;
+
 class QuarkRunner : public QObject
 {
 public:
@@ -26,6 +28,7 @@ protected Q_SLOTS:
 
 private:
   Qml4QWidgetsController* m_q4q_controller;
+  QuarkWidgetFactory* m_factory = nullptr;
   QWidget* m_widget = nullptr;
   QQmlComponent* m_component = nullptr;
   QObject* m_controller = nullptr;

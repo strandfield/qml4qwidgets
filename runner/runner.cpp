@@ -1,5 +1,7 @@
 #include "runner.h"
 
+#include "factory.h"
+
 #include "qml4qwidgets/qml4qwidgets.h"
 
 #include <QQmlComponent>
@@ -18,6 +20,7 @@
 #include <QDebug>
 
 #include <map>
+#include <memory>
 
 QuarkRunner::QuarkRunner(QObject* parent) : QObject(parent)
 {
@@ -47,9 +50,25 @@ bool QuarkRunner::setupFromCommandLine(const QStringList& args)
   }
 
   if (formUiPath.isEmpty()) {
-    qDebug() << "Missing .ui form";
-    return false;
+    if (qmlControllerPath.isEmpty()) {
+      QString pathFromWorkingDir = QDir::current().absoluteFilePath("main.ui");
+
+      if (QFileInfo::exists(pathFromWorkingDir)) {
+        formUiPath = pathFromWorkingDir;
+      }
+    }
+
+    if (formUiPath.isEmpty()) {
+      qDebug() << "Missing .ui form";
+      return false;
+    }
   }
+
+  auto factory = std::make_unique<QuarkWidgetFactory>();
+  m_factory = factory.get();
+  m_q4q_controller->setWidgetFactory(std::move(factory));
+
+  m_factory->uiLoader.setWorkingDirectory(QFileInfo(formUiPath).dir());
 
   setWidget(formUiPath);
 
@@ -87,13 +106,11 @@ void QuarkRunner::setWidget(const QString& formUiPath)
     qDebug() << "could not open " << formUiPath;
     return;
   }
-
-  QUiLoader loader;
   
-  QWidget* widget = loader.load(&file);
+  QWidget* widget = m_factory->uiLoader.load(&file);
 
   if (!widget) {
-    qDebug() << "failure to create widget: " << loader.errorString();
+    qDebug() << "failure to create widget: " << m_factory->uiLoader.errorString();
     return;
   }
 

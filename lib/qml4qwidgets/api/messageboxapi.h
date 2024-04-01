@@ -6,6 +6,9 @@
 
 #include <QObject>
 
+/**
+ * \brief provides access to some QMessageBox functions to QML
+ */
 class Q4Q_API QmlMessageBoxAPI : public QObject
 {
   Q_OBJECT

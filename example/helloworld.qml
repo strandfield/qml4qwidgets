@@ -13,7 +13,7 @@ WidgetController {
                 text += " World!"
             }
 
-            MessageBox.information(controlledWidget, "Greetings", text);
+            MessageBox.information(controlledWidget, "QML MessageBox", text);
         }
     }
 }

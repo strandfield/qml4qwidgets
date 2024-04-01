@@ -6,6 +6,14 @@
 
 class QWidget;
 
+/**
+ * \brief C++ implementation of the QML WidgetController type
+ *
+ * This type, which derives from Controller, is meant to be used
+ * as a QML controller for a QWidget.
+ *
+ * \sa Qml4QWidgetsController::installControllerOnWidget().
+ */
 class Q4Q_API WidgetController : public Controller
 {
   Q_OBJECT
